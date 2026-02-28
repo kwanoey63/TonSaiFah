@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ระบบลงเวลา</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #0069d9;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --bg-color: #f4f7fb;
+      --card-bg-color: #ffffff;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --border-color: #dee2e6;
+      --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 14px;
+    }
+
+    * {
+      font-family: 'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, Arial, Helvetica, sans-serif;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #ffffff;
+      background-image:
+        linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+      background-size: 20px 20px;
+      margin: 0;
+      min-height: 100vh;
+      padding-top: 70px; 
+    }
+    
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: rgba(248, 250, 252, 0.82);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* === Navbar === */
+    .navbar-custom {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+      position: fixed;
+      top: 0; left: 0; width: 100%;
+      z-index: 1000;
+    }
+
+    .navbar-custom .navbar-brand {
+      color: var(--primary-color);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .navbar-custom .navbar-brand i { font-size: 1.2rem; }
+
+    .navbar-custom .btn-custom {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      font-weight: 600;
+      padding: 0.45rem 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.95rem;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.2s ease;
+      box-shadow: 0 6px 14px rgba(0,105,217,0.25);
+      cursor: pointer;
+    }
+
+    .navbar-custom .btn-custom:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0,105,217,0.35);
+    }
+
+    .navbar-toggler {
+      border-color: var(--border-color);
+    }
+
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0,105,217,0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* === Layout หลัก === */
+    main.app-wrapper { padding: 1.25rem 0.75rem 2rem; }
+
+    .app-grid-container {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 1.75rem;
+      max-width: 1150px;
+      margin: 0 auto;
+      animation: fadeIn 0.45s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-panel {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      padding: 1.75rem 1.75rem 1.5rem;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(226, 232, 240, 0.85);
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    .section-title { margin-bottom: 0.75rem; }
+
+    .section-title h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin: 0 0 0.35rem 0;
+    }
+
+    .section-title p { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
+
+    .section-title hr {
+      margin-top: 0.75rem;
+      margin-bottom: 0;
+      border: none;
+      border-bottom: 2px solid rgba(0, 105, 217, 0.12);
+    }
+
+    /* === Form area === */
+    .form-step-label {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.98rem;
+      color: var(--text-primary);
+    }
+
+    .form-step-label span.step-number {
+      width: 24px; height: 24px;
+      border-radius: 999px;
+      background: rgba(0, 105, 217, 0.08);
+      color: var(--primary-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .choice-button {
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      font-family: 'Sarabun', sans-serif;
+      background-color: #f8fafc;
+      color: var(--text-secondary);
+      min-height: 44px;
+    }
+
+    .choice-button i { font-size: 0.95rem; }
+
+    .choice-button:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      background-color: #eff6ff;
+    }
+
+    .choice-button.active,
+    .choice-button.selected {
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
+    }
+
+    #mode-in.active { background-color: var(--success-color); }
+    #mode-out.active { background-color: var(--danger-color); }
+
+    .location-button[data-value="ปฎิบัติงานในโรงเรียน"].selected {
+      background-color: var(--success-color);
+    }
+
+    .location-button[data-value="ปฎิบัติงานนอกโรงเรียน"].selected {
+      background-color: var(--warning-color);
+      color: #1f2933;
+      box-shadow: 0 6px 14px rgba(245, 158, 11, 0.4);
+    }
+
+    .mode-buttons,
+    .location-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    select,
+    input[type="text"] {
+      width: 90%;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.96rem;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      background-color: #ffffff;
+      color: var(--text-primary);
+      font-family: 'Sarabun', sans-serif;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+    }
+
+    select:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0,105,217,0.18);
+      background-color: #f9fbff;
+    }
+
+    .position-relative .dropdown-menu {
+      border-radius: 12px;
+      padding: 0.25rem 0;
+      border-color: rgba(226, 232, 240, 0.95);
+    }
+
+    .hidden { display: none !important; }
+
+    /* === Info box === */
+    .info-box {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      background-color: rgba(241, 245, 249, 0.7);
+      border-radius: var(--radius);
+      padding: 0.9rem 0.95rem;
+      border: 1px dashed rgba(148, 163, 184, 0.7);
+    }
+
+    .info-box p {
+      margin: 0.15rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .info-box i { color: var(--primary-color); font-size: 0.95rem; width: 18px; text-align: center; }
+    .info-box strong { color: var(--text-primary); margin-right: 0.25rem; }
+
+    /* === Action buttons === */
+    .action-button {
+      width: 100%;
+      padding: 0.8rem 0.95rem;
+      border: none;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.1s ease, box-shadow 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      font-family: 'Sarabun', sans-serif;
+      min-height: 46px;
+    }
+
+    .action-button:hover:enabled {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.16);
+    }
+
+    #snap { background-color: var(--primary-color); }
+    #retake { background-color: var(--warning-color); color: #1f2933; }
+    #submit { background-color: var(--success-color); font-size: 1.02rem; padding-block: 0.9rem; margin-top: 0.25rem; }
+    #switchCamera { background-color: #6c757d; }
+
+    /* === Clock & Camera === */
+    .clock-display { text-align: center; }
+
+    #current-time-large {
+      font-size: 3.3rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      letter-spacing: 0.03em;
+    }
+
+    #current-date-small {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .camera-section { margin-top: 1.2rem; }
+
+    video,
+    canvas {
+      width: 100%;
+      height: auto;
+      min-height: 250px;
+      border-radius: calc(var(--radius) - 2px);
+      background-color: #e9ecef;
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+      transform: scaleX(1);
+    }
+
+    .camera-buttons {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.8rem;
+    }
+
+    /* === Spinner Overlay === */
+    .spinner-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(248, 250, 252, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .spinner-overlay.show { opacity: 1; pointer-events: all; }
+
+    .spinner-overlay i {
+      font-size: 3rem;
+      color: var(--primary-color);
+      animation: spin 1s linear infinite;
+    }
+
+    .spinner-overlay span {
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* === Name Picker === */
+    #nameDropdown .item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.45rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.92rem;
+    }
+
+    #nameDropdown .item:hover,
+    #nameDropdown .item.active { background: #f1f5ff; }
+
+    #nameDropdown .name { font-weight: 600; color: var(--text-primary); }
+
+    .pin-btn {
+      margin-left: auto;
+      border: none;
+      background: transparent;
+      font-size: 0.95rem;
+      color: #9ca3af;
+      padding: 0.15rem;
+    }
+
+    .pin-btn.pinned { color: #f59e0b; }
+
+    mark { background: #ffe9a8; padding: 0 0.12rem; border-radius: 0.18rem; }
+
+    .chip {
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      background: #ffffff;
+      font-size: 0.86rem;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .chip:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      background: #eff6ff;
+    }
+
+    #quickChips { row-gap: 0.4rem; }
+
+    /* === API Status === */
+    .api-status {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      z-index: 999;
+      opacity: 0.7;
+    }
+
+    .api-status.connected { background: #d1fae5; color: #065f46; }
+    .api-status.disconnected { background: #fee2e2; color: #991b1b; }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 991.98px) {
+      main.app-wrapper { padding-inline: 0.75rem; padding-top: 1.4rem; }
+      .app-grid-container { grid-template-columns: 1fr; }
+      .action-column { order: -1; }
+      #current-time-large { font-size: 2.7rem; }
+    }
+
+    @media (max-width: 576px) {
+      body { padding-top: 64px; }
+      .card-panel { padding: 1.3rem 1.2rem 1.1rem; }
+      .section-title h2 { font-size: 1.1rem; }
+      .form-step-label { font-size: 0.9rem; }
+      #current-time-large { font-size: 2.3rem; }
+      #current-date-small { font-size: 0.85rem; }
+      .mode-buttons, .location-options { grid-template-columns: 1fr; }
+      .camera-buttons { flex-direction: column; }
+      .navbar-custom .btn-custom { padding: 0.35rem 0.9rem; font-size: 0.85rem; }
+      video, canvas { min-height: 220px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-custom">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-fingerprint"></i>
+        <span>ระบบลงเวลา</span>
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center">
+          <li class="nav-item">
+            <button class="btn btn-custom" type="button" onclick="verifyAdminCode()">
+              <i class="fas fa-list-alt"></i>
+              <span>Admin</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Spinner -->
+  <div id="loadingSpinner" class="spinner-overlay">
+    <i class="fas fa-spinner"></i>
+    <span id="spinnerText">กำลังประมวลผล กรุณารอสักครู่...</span>
+  </div>
+
+  <main class="app-wrapper">
+    <!-- Main App -->
+    <div class="app-grid-container" id="mainAppContainer">
+      <!-- CAMERA & CLOCK -->
+      <section class="card-panel action-column">
+        <div class="clock-display">
+          <div id="current-time-large"></div>
+          <div id="current-date-small"></div>
+        </div>
+
+        <div class="camera-section">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="canvas" style="display: none;"></canvas>
+
+          <div class="camera-buttons">
+            <button id="snap" type="button" class="action-button">
+              <i class="fas fa-camera"></i> ถ่ายภาพ
+            </button>
+            <button id="retake" type="button" class="action-button" style="display: none;">
+              <i class="fas fa-redo-alt"></i> ถ่ายใหม่
+            </button>
+            <button id="switchCamera" type="button" class="action-button">
+              <i class="fas fa-sync-alt"></i> สลับกล้อง
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- FORM -->
+      <section class="card-panel form-column">
+        <div class="section-title">
+          <h2>
+            <i class="fas fa-list-check"></i>
+            ขั้นตอนการลงเวลา
+          </h2>
+        </div>
+
+        <!-- Step 1: Mode -->
+        <div>
+          <label class="form-step-label">
+            <span class="step-number">1</span>
+            <span>เลือกโหมดการลงเวลา</span>
+          </label>
+          <div class="mode-buttons">
+            <button id="mode-in" data-mode="in" type="button" class="choice-button">
+              <i class="fas fa-sign-in-alt"></i> เข้างาน
+            </button>
+            <button id="mode-out" data-mode="out" type="button" class="choice-button">
+              <i class="fas fa-sign-out-alt"></i> ออกงาน
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Name -->
+        <div>
+          <label for="nameSearch" class="form-step-label">
+            <span class="step-number">2</span>
+            <span>เลือกชื่อ-สกุล</span>
+          </label>
+
+          <div id="quickChips" class="d-flex flex-wrap gap-2 mb-2"></div>
+
+          <div class="position-relative">
+            <input
+              id="nameSearch"
+              type="text"
+              class="form-control"
+              autocomplete="off"
+              placeholder="พิมพ์เพื่อค้นหา เช่น ชื่อ หรือ นามสกุล">
+            <div
+              id="nameDropdown"
+              class="dropdown-menu show w-100 shadow-sm"
+              style="max-height:280px; overflow:auto; display:none;">
+            </div>
+          </div>
+
+          <select id="name" class="form-select mt-2" style="display:none;">
+            <option value="" disabled selected>-- กรุณาเลือก --</option>
+          </select>
+        </div>
+
+        <!-- Step 3: Location -->
+        <div id="locationSection" class="hidden">
+          <label class="form-step-label">
+            <span class="step-number">3</span>
+            <span>สถานที่ปฏิบัติงาน</span>
+          </label>
+          <div class="location-options">
+            <button
+              type="button"
+              class="location-button choice-button"
+              data-value="ปฎิบัติงานในโรงเรียน">
+              <i class="fas fa-desktop"></i> ในโรงเรียน
+            </button>
+            <button
+              type="button"
+              class="location-button choice-button"
+              data-value="ปฎิบัติงานนอกโรงเรียน">
+              <i class="fas fa-car-alt"></i> นอกโรงเรียน
+            </button>
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="info-box mt-1">
+          <p><i class="fas fa-calendar-alt"></i> <strong>วันที่</strong> <span id="infoDate">--</span></p>
+          <p><i class="fas fa-map-marker-alt"></i> <strong>พิกัด GPS</strong> <span id="lat">--</span>, <span id="lng">--</span></p>
+        </div>
+
+        <!-- Submit -->
+        <div class="mt-auto pt-1">
+          <button id="submit" type="button" class="action-button">
+            <i class="fas fa-paper-plane"></i> บันทึกเวลา
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- DATA TABLE (ADMIN) -->
+    <section
+      id="dataTableContainer"
+      class="card mt-4"
+      style="display: none; max-width: 100%; margin-inline: auto; padding: 1rem 1.25rem;">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h5 class="mb-0 d-flex align-items-center gap-2">
+          <i class="fas fa-database text-primary"></i>
+          <span>ข้อมูลการลงเวลา</span>
+        </h5>
+        <button class="btn btn-outline-danger btn-sm rounded-pill" type="button" onclick="logoutAdmin()">
+          <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+        </button>
+      </div>
+
+      <!-- Admin: เลือกวันที่ -->
+      <div class="mb-3">
+        <label class="form-label fw-bold"><i class="fas fa-calendar-day"></i> เลือกวันที่</label>
+        <input type="date" id="adminDate" class="form-control" style="max-width: 250px;">
+        <button class="btn btn-primary btn-sm mt-2 rounded-pill" onclick="loadAdminData()">
+          <i class="fas fa-search"></i> ค้นหา
+        </button>
+      </div>
+
+      <!-- Admin: ตารางข้อมูล -->
+      <div id="adminTableArea" style="overflow-x: auto;">
+        <p class="text-muted">กรุณาเลือกวันที่แล้วกดค้นหา</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- API Status -->
+  <div id="apiStatus" class="api-status disconnected">
+    <i class="fas fa-circle"></i> กำลังเชื่อมต่อ...
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    /* ==========================================================
+       🆕 API CONFIG — ใส่ URL ที่ได้จากการ Deploy Apps Script
+       ========================================================== */
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz57XFTmMCjiSeGJk9tt3vwr45mRewDwHYhhrCbH08isrrx4EXUtvZNxMIxCOlX9K0BPw/exec';
+    // ตัวอย่าง: 'https://script.google.com/macros/s/AKfycbx.../exec'
+
+    /* ===== 🆕 API Helper Function ===== */
+    async function callAPI(action, payload) {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: action, payload: payload || {} }),
+          redirect: 'follow'
+        });
+        const result = await response.json();
+        if (result.success) {
+          return result.data;
+        } else {
+          throw new Error(result.error || 'Unknown API error');
+        }
+      } catch (error) {
+        console.error('API Error [' + action + ']:', error);
+        throw error;
+      }
+    }
+
+    /* ===== ทดสอบการเชื่อมต่อ API ===== */
+    async function checkAPIConnection() {
+      const statusEl = document.getElementById('apiStatus');
+      try {
+        const response = await fetch(API_URL, { redirect: 'follow' });
+        const result = await response.json();
+        if (result.status === 'API is running') {
+          statusEl.className = 'api-status connected';
+          statusEl.innerHTML = '<i class="fas fa-circle"></i> เชื่อมต่อ API สำเร็จ';
+          setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+        }
+      } catch (err) {
+        statusEl.className = 'api-status disconnected';
+        statusEl.innerHTML = '<i class="fas fa-circle"></i> ไม่สามารถเชื่อมต่อ API';
+        console.error('API Connection Error:', err);
+      }
+    }
+
+    /* ===== DOM Refs ===== */
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const snapButton = document.getElementById('snap');
+    const submitButton = document.getElementById('submit');
+    const retakeButton = document.getElementById('retake');
+    const switchCameraButton = document.getElementById('switchCamera');
+    const nameSelect = document.getElementById('name');
+    const modeInButton = document.getElementById('mode-in');
+    const modeOutButton = document.getElementById('mode-out');
+    const locationSection = document.getElementById('locationSection');
+    const locationButtons = document.querySelectorAll('.location-button');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const currentTimeDisplay = document.getElementById('current-time-large');
+    const currentDateDisplay = document.getElementById('current-date-small');
+    const infoDateDisplay = document.getElementById('infoDate');
+    const mainAppContainer = document.getElementById('mainAppContainer');
+    const dataTableContainer = document.getElementById('dataTableContainer');
+
+    /* Name picker */
+    const nameSearchInput = document.getElementById('nameSearch');
+    const nameDropdown    = document.getElementById('nameDropdown');
+    const quickChips      = document.getElementById('quickChips');
+
+    let currentStream;
+    let currentFacing = 'user';
+    let selectedMode = '';
+    let selectedLocation = '';
+    let imageCaptured = false;
+    let latitude = null;
+    let longitude = null;
+
+    let EMPLOYEES = [];
+    let filtered = [];
+    let activeIndex = -1;
+    const LS_FAV = 'namepicker_favorites';
+    const LS_RECENT = 'namepicker_recent';
+    const MAX_RECENT = 3;
+
+    /* ===== Utils ===== */
+    function showSpinner(text) {
+      document.getElementById('spinnerText').textContent = text || 'กำลังประมวลผล กรุณารอสักครู่...';
+      loadingSpinner.classList.add("show");
+    }
+    function hideSpinner() {
+      loadingSpinner.classList.remove("show");
+    }
+
+    /* ===== 🆕 Camera — ทำงานได้เต็มที่เพราะไม่มี iframe ===== */
+    async function initializeCamera() {
+      try {
+        if (currentStream) {
+          currentStream.getTracks().forEach(track => track.stop());
+        }
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: currentFacing }
+        });
+        video.srcObject = currentStream;
+        video.style.display = 'block';
+        canvas.style.display = 'none';
+        snapButton.style.display = 'inline-flex';
+        retakeButton.style.display = 'none';
+        imageCaptured = false;
+        console.log('✅ Camera initialized (' + currentFacing + ')');
+      } catch (err) {
+        console.error('Camera error:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'ไม่สามารถเปิดกล้องได้!',
+          text: 'โปรดตรวจสอบการอนุญาตใช้งานกล้อง: ' + err.message
+        });
+      }
+    }
+
+    // สลับกล้อง หน้า/หลัง
+    switchCameraButton.addEventListener('click', () => {
+      currentFacing = currentFacing === 'user' ? 'environment' : 'user';
+      initializeCamera();
+    });
+
+    function updateDateTime() {
+      const now = new Date();
+      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      currentTimeDisplay.textContent = now.toLocaleTimeString('th-TH', timeOptions);
+      currentDateDisplay.textContent = now.toLocaleDateString('th-TH', dateOptions);
+      infoDateDisplay.textContent = now.toLocaleDateString('th-TH', dateOptions);
+    }
+
+    function getGeoLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            latitude = pos.coords.latitude;
+            longitude = pos.coords.longitude;
+            document.getElementById('lat').textContent = latitude.toFixed(6);
+            document.getElementById('lng').textContent = longitude.toFixed(6);
+          },
+          err => {
+            document.getElementById('lat').textContent = 'ไม่สามารถระบุ';
+            document.getElementById('lng').textContent = 'ตำแหน่งได้';
+            Swal.fire({
+              icon: 'warning',
+              title: 'ไม่พบตำแหน่ง',
+              text: 'ไม่สามารถเข้าถึงข้อมูล GPS ได้ โปรดอนุญาตการเข้าถึงตำแหน่ง'
+            });
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      }
+    }
+
+    /* ===== Mode / Location ===== */
+    function setActiveModeButton(mode) {
+      modeInButton.classList.toggle('active', mode === 'in');
+      modeOutButton.classList.toggle('active', mode === 'out');
+      selectedMode = mode;
+      if (mode) {
+        locationSection.classList.remove('hidden');
+      } else {
+        locationSection.classList.add('hidden');
+      }
+    }
+
+    modeInButton.addEventListener('click', () => setActiveModeButton('in'));
+    modeOutButton.addEventListener('click', () => setActiveModeButton('out'));
+
+    locationButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        locationButtons.forEach(btn => btn.classList.remove('selected'));
+        button.classList.add('selected');
+        selectedLocation = button.dataset.value;
+      });
+    });
+
+    /* ===== Camera capture ===== */
+    snapButton.addEventListener('click', () => {
+      if (!video.videoWidth || !video.videoHeight) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'ยังไม่พบสัญญาณกล้อง',
+          text: 'กรุณารอสักครู่แล้วลองถ่ายอีกครั้ง'
+        });
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // mirror
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      context.setTransform(1, 0, 0, 1, 0, 0);
+
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+      imageCaptured = true;
+      retakeButton.style.display = 'inline-flex';
+      snapButton.style.display = 'none';
+    });
+
+    retakeButton.addEventListener('click', () => {
+      video.style.display = 'block';
+      canvas.style.display = 'none';
+      imageCaptured = false;
+      retakeButton.style.display = 'none';
+      snapButton.style.display = 'inline-flex';
+    });
+
+    /* ===== 🆕 Submit — ใช้ callAPI แทน google.script.run ===== */
+    submitButton.addEventListener('click', async () => {
+      if (!selectedMode) {
+        Swal.fire({ icon: 'warning', title: 'ยังไม่สมบูรณ์', text: 'กรุณาเลือกโหมด "เข้างาน" หรือ "ออกงาน" ก่อน' });
+        return;
+      }
+      if (!nameSelect.value) {
+        Swal.fire({ icon: 'warning', title: 'ยังไม่สมบูรณ์', text: 'กรุณาเลือกชื่อ-สกุลของคุณ' });
+        return;
+      }
+      if (selectedMode === 'in' && !selectedLocation) {
+        Swal.fire({ icon: 'warning', title: 'ยังไม่สมบูรณ์', text: 'กรุณาเลือกสถานที่ปฏิบัติงาน' });
+        return;
+      }
+      if (!imageCaptured) {
+        Swal.fire({ icon: 'warning', title: 'กรุณาถ่ายภาพก่อน', text: 'โปรดถ่ายภาพเพื่อยืนยันตัวตนก่อนทำการบันทึกเวลา' });
+        return;
+      }
+      if (latitude === null || longitude === null) {
+        Swal.fire({ icon: 'warning', title: 'ไม่พบพิกัด', text: 'ระบบกำลังรอข้อมูลตำแหน่ง GPS โปรดรอสักครู่' });
+        return;
+      }
+
+      showSpinner('กำลังบันทึกข้อมูล...');
+
+      const formData = {
+        name: nameSelect.value,
+        mode: selectedMode,
+        locationType: selectedLocation,
+        latitude: latitude,
+        longitude: longitude,
+        imageBase64: canvas.toDataURL('image/jpeg', 0.8),
+        imageType: 'image/jpeg',
+        imageName: 'time_log_' + Date.now() + '.jpg'
+      };
+
+      try {
+        const res = await callAPI('uploadImageAndSave', formData);
+        hideSpinner();
+        if (typeof res === 'string' && res.startsWith('✅')) {
+          Swal.fire({
+            icon: 'success',
+            title: 'บันทึกสำเร็จ!',
+            text: res,
+            showConfirmButton: false,
+            timer: 2500
+          });
+          resetForm();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'บันทึกไม่สำเร็จ',
+            text: res || 'ไม่ทราบสาเหตุ'
+          });
+        }
+      } catch (err) {
+        hideSpinner();
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด!',
+          text: err.message
+        });
+      }
+    });
+
+    function resetForm() {
+      video.style.display = 'block';
+      canvas.style.display = 'none';
+      retakeButton.style.display = 'none';
+      snapButton.style.display = 'inline-flex';
+
+      nameSelect.value = "";
+      nameSearchInput.value = "";
+      nameDropdown.style.display = 'none';
+
+      locationButtons.forEach(btn => btn.classList.remove('selected'));
+      selectedLocation = '';
+      setActiveModeButton('');
+      imageCaptured = false;
+
+      initializeCamera();
+      getGeoLocation();
+    }
+
+    function toggleContent() {
+      const isMainVisible = mainAppContainer.style.display !== 'none';
+      mainAppContainer.style.display = isMainVisible ? 'none' : 'grid';
+      dataTableContainer.style.display = isMainVisible ? 'block' : 'none';
+    }
+
+    /* ===== 🆕 Admin Auth — ใช้ callAPI ===== */
+    async function verifyAdminCode() {
+      const result = await Swal.fire({
+        title: 'กรอกรหัสผู้ดูแลระบบ',
+        input: 'password',
+        inputPlaceholder: 'พิมพ์รหัสผ่านที่นี่',
+        showCancelButton: true,
+        confirmButtonText: 'ยืนยัน',
+        cancelButtonText: 'ยกเลิก',
+        showLoaderOnConfirm: true,
+        preConfirm: async (inputCode) => {
+          if (!inputCode) {
+            Swal.showValidationMessage('กรุณากรอกรหัสผ่าน');
+            return false;
+          }
+          try {
+            const storedCode = await callAPI('getAdminCode');
+            if (inputCode === String(storedCode)) {
+              return true;
+            } else {
+              Swal.showValidationMessage('รหัสผ่านไม่ถูกต้อง');
+              return false;
+            }
+          } catch (err) {
+            Swal.showValidationMessage('เกิดข้อผิดพลาด: ' + err.message);
+            return false;
+          }
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+      });
+
+      if (result.isConfirmed) {
+        toggleContent();
+        // ตั้งค่า default date เป็นวันนี้
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('adminDate').value = today;
+      }
+    }
+
+    /* ===== 🆕 Admin: โหลดข้อมูลตาราง ===== */
+    async function loadAdminData() {
+      const dateStr = document.getElementById('adminDate').value;
+      if (!dateStr) {
+        Swal.fire({ icon: 'warning', title: 'กรุณาเลือกวันที่' });
+        return;
+      }
+
+      const area = document.getElementById('adminTableArea');
+      area.innerHTML = '<p class="text-muted"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</p>';
+
+      try {
+        const result = await callAPI('getAttendanceSummaryDaily', { dateString: dateStr });
+        
+        let html = '';
+        
+        // Summary
+        html += '<div class="d-flex gap-3 mb-3 flex-wrap">';
+        html += '<span class="badge bg-primary rounded-pill px-3 py-2">ทั้งหมด ' + result.summary.totalEmployees + ' คน</span>';
+        html += '<span class="badge bg-success rounded-pill px-3 py-2">ออกงานแล้ว ' + result.summary.loggedOut + '</span>';
+        html += '<span class="badge bg-warning text-dark rounded-pill px-3 py-2">ยังไม่ออกงาน ' + result.summary.notLoggedOut + '</span>';
+        html += '<span class="badge bg-secondary rounded-pill px-3 py-2">ไม่ได้ลงเวลา ' + result.summary.missing + '</span>';
+        html += '</div>';
+
+        // Table
+        html += '<table class="table table-sm table-bordered table-hover">';
+        html += '<thead class="table-light"><tr>';
+        html += '<th>#</th><th>ชื่อ</th><th>เข้างาน</th><th>ออกงาน</th><th>สถานที่</th><th>สถานะ</th>';
+        html += '</tr></thead><tbody>';
+        
+        result.details.forEach((emp, i) => {
+          let statusBadge = '';
+          if (emp.status === 'ออกงานแล้ว') statusBadge = '<span class="badge bg-success">ออกงานแล้ว</span>';
+          else if (emp.status === 'ยังไม่ออกงาน') statusBadge = '<span class="badge bg-warning text-dark">ยังไม่ออกงาน</span>';
+          else statusBadge = '<span class="badge bg-secondary">ไม่ได้ลงเวลา</span>';
+          
+          html += '<tr>';
+          html += '<td>' + (i + 1) + '</td>';
+          html += '<td>' + emp.name + '</td>';
+          html += '<td>' + (emp.timeIn || '-') + '</td>';
+          html += '<td>' + (emp.timeOut || '-') + '</td>';
+          html += '<td>' + (emp.locationType || '-') + '</td>';
+          html += '<td>' + statusBadge + '</td>';
+          html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        area.innerHTML = html;
+
+      } catch (err) {
+        area.innerHTML = '<p class="text-danger"><i class="fas fa-exclamation-circle"></i> โหลดข้อมูลไม่สำเร็จ: ' + err.message + '</p>';
+      }
+    }
+
+    function logoutAdmin() {
+      Swal.fire({
+        icon: 'info',
+        title: 'ออกจากระบบเรียบร้อย',
+        confirmButtonText: 'ตกลง'
+      }).then(() => {
+        dataTableContainer.style.display = 'none';
+        mainAppContainer.style.display = 'grid';
+      });
+    }
+
+    /* ===== Name Picker Logic ===== */
+    const debounce = (fn, ms = 200) => {
+      let t;
+      return (...a) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...a), ms);
+      };
+    };
+    const norm = s => (s || '').toString().toLowerCase().trim();
+
+    function highlight(text, query) {
+      if (!query) return text;
+      const q = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp('(' + q + ')', 'ig');
+      return text.replace(re, '<mark>$1</mark>');
+    }
+
+    function getFav() {
+      try { return JSON.parse(localStorage.getItem(LS_FAV) || '[]'); }
+      catch (e) { return []; }
+    }
+    function setFav(arr) { localStorage.setItem(LS_FAV, JSON.stringify(arr)); }
+    function getRecent() {
+      try { return JSON.parse(localStorage.getItem(LS_RECENT) || '[]'); }
+      catch (e) { return []; }
+    }
+
+    function clearRecent() {
+      localStorage.removeItem(LS_RECENT);
+      renderChips();
+    }
+
+    function pushRecent(name) {
+      let r = getRecent().filter(x => x !== name);
+      r.unshift(name);
+      if (r.length > MAX_RECENT) r = r.slice(0, MAX_RECENT);
+      localStorage.setItem(LS_RECENT, JSON.stringify(r));
+    }
+
+    function renderChips() {
+      const fav = getFav();
+      const rec = getRecent();
+      quickChips.innerHTML = '';
+
+      if (fav.length) {
+        const tag = document.createElement('span');
+        tag.className = 'text-muted me-2';
+        tag.textContent = 'รายการโปรด:';
+        quickChips.appendChild(tag);
+        fav.forEach(n => addChip(n));
+      }
+      if (rec.length) {
+        const sep = document.createElement('span');
+        sep.className = 'text-muted ms-3 me-2';
+        sep.textContent = 'รายชื่อล่าสุดที่ใช้:';
+        quickChips.appendChild(sep);
+
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'btn btn-link btn-sm p-0 me-2';
+        clearBtn.innerHTML = '<i class="fa fa-trash"></i>';
+        clearBtn.onclick = clearRecent;
+        quickChips.appendChild(clearBtn);
+        rec.forEach(n => addChip(n));
+      }
+
+      function addChip(name) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip';
+        b.textContent = name;
+        b.onclick = () => selectEmployee(name);
+        quickChips.appendChild(b);
+      }
+    }
+
+    function selectEmployee(name) {
+      nameSelect.value = name;
+      nameSearchInput.value = name;
+      if (name) pushRecent(name);
+      renderChips();
+      hideDropdown();
+    }
+
+    function togglePin(name, btn) {
+      const fav = getFav();
+      const idx = fav.indexOf(name);
+      if (idx > -1) { fav.splice(idx, 1); btn.classList.remove('pinned'); }
+      else { fav.push(name); btn.classList.add('pinned'); }
+      setFav(fav);
+      renderChips();
+    }
+
+    function renderDropdown(list, query) {
+      nameDropdown.innerHTML = '';
+      if (!list.length) {
+        const empty = document.createElement('div');
+        empty.className = 'dropdown-item text-muted';
+        empty.textContent = 'ไม่พบรายชื่อที่ตรง';
+        nameDropdown.appendChild(empty);
+      } else {
+        const fav = getFav();
+        list.forEach((n, i) => {
+          const item = document.createElement('div');
+          item.className = 'item';
+          item.setAttribute('role', 'button');
+          item.innerHTML =
+            '<i class="fa-regular fa-user"></i>' +
+            '<div class="flex-1"><div class="name">' + highlight(n, query) + '</div></div>' +
+            '<button class="pin-btn ' + (fav.includes(n) ? 'pinned' : '') + '" title="ปักหมุด">' +
+            '<i class="fa-solid fa-star"></i></button>';
+          item.addEventListener('click', (e) => {
+            if (e.target.closest('.pin-btn')) return;
+            selectEmployee(n);
+          });
+          item.querySelector('.pin-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePin(n, e.currentTarget);
+          });
+          nameDropdown.appendChild(item);
+        });
+      }
+      showDropdown();
+      activeIndex = -1;
+      updateActiveItem();
+    }
+
+    function showDropdown() { nameDropdown.style.display = 'block'; }
+    function hideDropdown() { nameDropdown.style.display = 'none'; activeIndex = -1; updateActiveItem(); }
+
+    function updateActiveItem() {
+      [...nameDropdown.querySelectorAll('.item')].forEach((el, idx) => {
+        el.classList.toggle('active', idx === activeIndex);
+      });
+    }
+
+    const filterNames = debounce((q) => {
+      const qq = norm(q);
+      if (!qq) {
+        filtered = EMPLOYEES.slice(0, 50);
+      } else {
+        filtered = EMPLOYEES.filter(n => norm(n).includes(qq)).slice(0, 100);
+      }
+      renderDropdown(filtered, q);
+    }, 200);
+
+    nameSearchInput.addEventListener('input', e => filterNames(e.target.value));
+    nameSearchInput.addEventListener('focus', () => {
+      filterNames(nameSearchInput.value);
+      showDropdown();
+    });
+
+    nameSearchInput.addEventListener('keydown', (e) => {
+      const items = nameDropdown.querySelectorAll('.item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (items.length) { activeIndex = Math.min(items.length - 1, activeIndex + 1); updateActiveItem(); items[activeIndex]?.scrollIntoView({ block: 'nearest' }); }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (items.length) { activeIndex = Math.max(0, activeIndex - 1); updateActiveItem(); items[activeIndex]?.scrollIntoView({ block: 'nearest' }); }
+      } else if (e.key === 'Enter') {
+        if (activeIndex > -1 && filtered[activeIndex]) { e.preventDefault(); selectEmployee(filtered[activeIndex]); }
+      } else if (e.key === 'Escape') {
+        hideDropdown();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#nameDropdown') && !e.target.closest('#nameSearch')) {
+        hideDropdown();
+      }
+    });
+
+    /* ===== 🆕 ดึงรายชื่อจาก API (แทน google.script.run) ===== */
+    async function populateEmployeeNames() {
+      try {
+        const names = await callAPI('getEmployeeNames');
+        if (Array.isArray(names)) {
+          EMPLOYEES = names.filter(Boolean);
+          nameSelect.innerHTML = '<option value="" disabled selected>-- กรุณาเลือก --</option>';
+          EMPLOYEES.forEach(n => {
+            const opt = document.createElement('option');
+            opt.value = n;
+            opt.textContent = n;
+            nameSelect.appendChild(opt);
+          });
+          renderChips();
+          console.log('✅ โหลดรายชื่อพนักงาน ' + EMPLOYEES.length + ' คน');
+        }
+      } catch (err) {
+        console.error('❌ โหลดรายชื่อพนักงานไม่สำเร็จ:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'โหลดรายชื่อไม่สำเร็จ',
+          text: 'ไม่สามารถเชื่อมต่อกับ API ได้ กรุณาตรวจสอบ URL ของ Apps Script'
+        });
+      }
+    }
+
+    /* ===== Lifecycle ===== */
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 ===== เริ่มต้นระบบ (GitHub Pages) =====');
+      
+      initializeCamera();
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+      getGeoLocation();
+      populateEmployeeNames();
+      checkAPIConnection();
+
+      console.log('✅ ===== เริ่มต้นระบบสำเร็จ =====');
+    });
+
+    // Global functions
+    window.verifyAdminCode = verifyAdminCode;
+    window.logoutAdmin = logoutAdmin;
+    window.loadAdminData = loadAdminData;
+    window.clearRecent = clearRecent;
+  </script>
+</body>
+</html>
